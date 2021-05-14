@@ -1,69 +1,68 @@
-with open('zbsconfig.txt', 'r') as file: #нужен файл zbsconfig.txt заполнить 16 строк по одному смайлу, иначе жопа отвалиться
-	emoji = file.readlines()
-	file.close()
-for line in range(0,16):
-    emoji[line] = emoji[line].rstrip("\n")
+from re import findall
+emoji = open('zbsconfig.txt', 'r').read().split("\n", 15)  #нужен файл zbsconfig.txt заполнить 16 строк по одному смайлу, иначе жопа отвалиться
+emoji2hex = dict(zip(emoji, ["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f"]))
 
-answer=input("Чо будем? Читать(0) или писать(1), всё остальное будет воспринято предательством: ")
+def checkArguments(thin, A, B):
+	if thin not in [A, B]:
+		print("Ошибка: аргументы где??")
+		raise SystemExit
 
-hex = ["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f"]
-tmp = ["#0","#1","#2","#3","#4","#5","#6","#7","#8","#9","#a","#b","#c","#d","#e","#f"]
-if (int(answer) == 0):
+def regular(text):
+	return findall(":\w+:", text)
 
-	answer=input("Чо будем читать? Картины(0) или письменные произведения(1): ")
+cryptMode=input("Что будем? [Ч]итать или [П]исать? Всё остальное будет воспринято предательством: ")
+checkArguments(cryptMode, 'Ч', 'П')
+
+final = ""
+if (cryptMode == 'Ч'):
+	answer=input("Что будем читать? [К]артины или [П]исьменные произведения: ")
+	checkArguments(answer, 'К', 'П')
+
+	if (answer == 'К'):
+		answer = input("Место действа: ")
+
+		filedata = open(answer, 'r').read()
 	
-	if (int(answer) == 0):
-		answer=input("Место действа: ")
-		with open(answer, 'r') as file:
-			filedata = file.read()
-	
-
-		for eh in range(0,16):
-			filedata = filedata.replace(emoji[eh], hex[eh])
+		for symbol in regular(filedata):
+			if symbol in emoji2hex:
+				final += emoji2hex[symbol]
 
 		answer=input("Название картины: ")
 		
-		with open(answer, 'wb') as file:
-			file.write(bytes.fromhex(filedata))
+		open(answer, 'wb').write(bytes.fromhex(final))
+	else:
+		answer = input("Вставляй: ")
 
-	elif (int(answer) == 1):
-		answer=input("Вставляй: ")
-		
-		for eh in range(0,16):
-			answer = answer.replace(emoji[eh], hex[eh])
-		answer = bytes.fromhex(answer).decode('cp1251')
-		print(answer)
+		for symbol in regular(answer):
+			if symbol in emoji2hex:
+				final += emoji2hex[symbol]
 
-
-
-elif (int(answer) == 1):
-
-	answer=input("Чо будем писать? Картины(0) или письменные произведения(1): ")
+		final = bytes.fromhex(final).decode('cp1251')
+		print(final)
+else:
+	answer=input("Что будем писать? [К]артины или [П]исьменные произведения: ")
+	checkArguments(answer, 'К', 'П')
 	
-	if (int(answer) == 0):
-		answer=input("Название картины?: ")
+	if (answer == 'К'):
+		answer = input("Название картины?: ")
 		
-		with open(answer, 'rb') as file:
-		  filedata = file.read().hex()
+		filedata = open(answer, 'rb').read().hex()
 		
-		for eh in range(0,16):
-			filedata = filedata.replace(hex[eh],tmp[eh])
-		countMsg = len(filedata) / 2000
-		for eh in range(0,16):
-			filedata = filedata.replace(tmp[eh],emoji[eh])
-		
+		for symbol in filedata:
+			for key in emoji2hex:
+				if symbol == emoji2hex[key]:
+					final += key
+
 		answer=input("Куда ставить картину: ")
 		
-		print("Чтобы отправить это, потребуеться ~"+str(countMsg)+" сообщений..")
+		print("Чтобы отправить это, потребуеться ~"+str(len(final) / 2000)+" сообщений..")
 		
-		with open(answer, 'w') as file:
-		  file.write(filedata)
-	elif (int(answer) == 1):
-		answer=input("Пиши: ").encode('cp1251').hex()
+		open(answer, 'w').write(final)
+	else:
+		answer = input("Пиши: ").encode('cp1251').hex()
 
-		for eh in range(0,16):
-			answer = answer.replace(hex[eh],tmp[eh])
-		for eh in range(0,16):
-			answer = answer.replace(tmp[eh],emoji[eh])
-	
-		print(answer)
+		for symbol in answer:
+			for key in emoji2hex:
+				if symbol == emoji2hex[key]:
+					final += key
+		print(final)
