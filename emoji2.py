@@ -44,7 +44,7 @@ else:
 	checkArguments(answer, 'К', 'П')
 	
 	if (answer == 'К'):
-		answer = input("Название картины?: ")
+		answer = input("Название картины: ")
 		
 		filedata = open(answer, 'rb').read().hex()
 		

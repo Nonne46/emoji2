@@ -31,16 +31,52 @@ proc encryptDecrypt(mode, message: string): string =
                 final.add(hex2emoji[symbol])
     return final
 
-var cryptMode, startMessage: string
+proc encryptDecryptFile(mode, filename, outfile: string) =
+    var final: string = ""
+    let (emoji2hex, hex2emoji) = getKeys(getEmojis())
 
-stdout.write "Что будем? [Ч]итать или [П]исать? Всё остальное будет воспринято предательством: "
-cryptMode = stdin.readLine
+    if mode == "Ч":
+        let filebytesemoji = readFile(filename)
+        for symbol in regular(filebytesemoji):
+            if emoji2hex.hasKey(symbol):
+                final.add(emoji2hex[symbol])
+        final = final.parseHexStr()
+    else:
+        let filebyteshex = readFile(filename).toHex().toLower()
+        for symbol in filebyteshex:
+            if hex2emoji.hasKey(symbol):
+                final.add(hex2emoji[symbol])
+    writeFile(outfile, final)
 
-if not (cryptMode in ["П", "Ч"]):
-    echo "Ошибка: аргументы где??"
-    system.quit(1)
+proc checkArguments(thin, a, b: string) =
+    if not (thin in [a, b]):
+        echo "Ошибка: аргументы где??"
+        system.quit(1)
 
-stdout.write "Пиши: "
-startMessage = stdin.readLine
+var cryptMode, cryptType, startMessage, filename, outfile: string
 
-echo encryptDecrypt(cryptMode, startMessage)
+stdout.write "С чем собираемся иметь дело? С [К]артинами или [П]исьменными произведениями: "
+cryptType = stdin.readLine
+checkArguments(cryptType, "К", "П")
+
+if cryptType == "П":
+    stdout.write "Что будем? [Ч]итать или [П]исать? Всё остальное будет воспринято предательством: "
+    cryptMode = stdin.readLine
+    checkArguments(cryptMode, "Ч", "П")
+
+    stdout.write "Пиши: "
+    startMessage = stdin.readLine
+
+    echo encryptDecrypt(cryptMode, startMessage)
+else:
+    stdout.write "Что будем? [Ч]итать или [П]исать? Всё остальное будет воспринято предательством: "
+    cryptMode = stdin.readLine
+    checkArguments(cryptMode, "Ч", "П")
+
+    stdout.write "Название картины: "
+    filename = stdin.readLine
+
+    stdout.write "Где её разместим: "
+    outfile = stdin.readLine
+    encryptDecryptFile(cryptMode, filename, outfile)
+
